@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30907.101
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Day012 영상처리 Beta4", "Day012 영상처리 Beta4\Day012 영상처리 Beta4.csproj", "{1BFDAF22-8079-45EA-AE5C-C188979D1904}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1BFDAF22-8079-45EA-AE5C-C188979D1904}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1BFDAF22-8079-45EA-AE5C-C188979D1904}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1BFDAF22-8079-45EA-AE5C-C188979D1904}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1BFDAF22-8079-45EA-AE5C-C188979D1904}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BB3D8A25-FEA3-47DF-9B7D-81C6D9904300}
+	EndGlobalSection
+EndGlobal
