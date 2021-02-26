@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using MySql.Data.MySqlClient;
 using System.IO;
 
 namespace Day012_영상처리_Beta4
@@ -19,31 +20,132 @@ namespace Day012_영상처리_Beta4
         }
 
         //전역 변수
-        static byte[,] inImage, outImage;
-        static int inH, inW, outH, outW;
-        static string fileName;
-        static Bitmap paper;//그림을 콕콕 찍을 종이
-
+        public static byte[,] dbImage;
+        public static int return_i_id;
+        byte[,] inImage, outImage;
+        int inH, inW, outH, outW;
+        string fileName;
+        Bitmap paper;//그림을 콕콕 찍을 종이
+        String connStr = "Server=192.168.56.101;Uid=winuser;Pwd=4321;Database=image_db;Charset=UTF8";
+        MySqlConnection conn; // 교량
+        MySqlCommand cmd; // 트럭
+        String sql = "";  // 물건박스
+        MySqlDataReader reader; // 트럭이 가져올 끈
+        int openValue; // 0 DB로 오픈 1 일반 오픈
         private void Form1_Load(object sender, EventArgs e)
         {
-
+            //<1> 데이터베이스 연결 (교량 건설) + <2> 트럭 준비
+            conn = new MySqlConnection(connStr);
+            conn.Open();
+            cmd = new MySqlCommand("", conn);
         }
-
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
-
+            //<4> 데이터베이스 해제 (교량 철거)
+            conn.Close();
         }
-
+        private void dB로열기ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            openValue = 0;
+            OpenDB odb = new OpenDB();
+            odb.ShowDialog();
+            inW = dbImage.GetLength(0);
+            inH = dbImage.GetLength(1);
+            inImage = new byte[inH, inW]; // 메모리 할당
+            for (int i = 0; i < inH; i++)
+            {
+                for (int j = 0; j < inW; j++)
+                {
+                    inImage[i, j] = dbImage[i, j];
+                }
+            }
+            equal_image();
+        }
+        private void dB로저장ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            /*
+              CREATE TABLE image (
+	            i_id INT NOT NULL PRIMARY KEY,		-- 랜덤하게 생성(PK).
+	            i_fname VARCHAR(50) NOT NULL,		-- 파일명
+	            i_extname VARCHAR(10) NOT NULL,		-- 확장명
+	            i_fsize BIGINT NOT NULL,			-- 파일 크기
+	            i_width INT NOT NULL,				-- 이미지 폭
+	            i_height INT NOT NULL,				-- 이미지 높이
+	            i_user VARCHAR(20)					-- 이미지 업로드 유저
+               );
+             */
+            // c:\\images\\pet_raw\\cat256_01.raw
+            String i_fname = "", i_extname = "";
+            long i_fsize = 0;
+            int i_width = 0, i_height = 0;
+            if (openValue == 1)
+            {
+                String[] tmp = fileName.Split('\\');
+                String tmp1 = tmp[tmp.Length - 1]; // cat256_01.raw
+                String[] tmp2 = tmp1.Split('.');
+                i_fname = tmp2[0];   //cat256_01
+                i_extname = tmp2[1]; //raw
+                i_fsize = new FileInfo(fileName).Length;
+                i_width = (int)Math.Sqrt(i_fsize);
+                i_height = i_width;
+            } else
+            {
+                sql = "SELECT i_fname, i_extname, i_fsize, i_width, i_height FROM image WHERE i_id = " + return_i_id; // 짐 싸기
+                cmd.CommandText = sql;  // 짐을 트럭에 싣기
+                reader = cmd.ExecuteReader(); // 짐을 서버에 부어넣고, 끈으로 묶어서 끈만 가져옴.
+                while(reader.Read())
+                {
+                    i_fname = (String)reader["i_fname"];
+                    i_extname = (String)reader["i_extname"];
+                    i_fsize = (long)reader["i_fsize"];
+                    i_width = (int)reader["i_width"];
+                    i_height = (int)reader["i_height"];
+                }
+                reader.Close();
+            }
+            String i_user = "Hong";
+            Random rnd = new Random();
+            int i_id = rnd.Next(0, int.MaxValue);
+            // 이미지 테이블(부모 테이블)에 INSERT
+            sql = "INSERT INTO image(i_id, i_fname, i_extname, i_fsize, i_width, i_height, i_user) VALUES (";
+            sql += i_id + ", '" + i_fname + "', '" + i_extname + "', " + i_fsize + ", ";
+            sql += i_width + ", " + i_height + ", '" + i_user + "')";
+            cmd = new MySqlCommand("", conn);
+            cmd.CommandText = sql;  // 짐을 트럭에 싣기
+            cmd.ExecuteNonQuery();
+            //RAW 파일을 열어서 pixel 테이블에 INSERT
+            /*CREATE TABLE pixel(
+              i_id INT NOT NULL, --이미지 파일 아이디(FK)
+              p_row INT NOT NULL, --행 위치
+              p_col INT NOT NULL, --열 위치
+              p_value TINYINT UNSIGNED NOT NULL, --픽셀값
+              FOREIGN KEY(i_id) REFERENCES image(i_id)
+            );*/
+            int p_row, p_col, p_value;
+            cmd = new MySqlCommand("", conn);
+            for (int i = 0; i < i_width; i++)
+            {
+                for (int k = 0; k < i_height; k++)
+                {
+                    p_row = i;
+                    p_col = k;
+                    p_value = (int)outImage[i, k];
+                    sql = "INSERT INTO pixel(i_id, p_row, p_col, p_value) VALUES(";
+                    sql += i_id + ", " + p_row + ", " + p_col + ", " + p_value + ")";
+                    cmd.CommandText = sql;
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            MessageBox.Show(fileName + "입력 완료");
+        }
         private void 열기ToolStripMenuItem_Click(object sender, EventArgs e)
         {
             openImage();
         }
-
         private void 원본이미지ToolStripMenuItem_Click(object sender, EventArgs e)
         {
             equal_image();
         }
-
         private void 밝게어둡게ToolStripMenuItem_Click(object sender, EventArgs e)
         {
             brightImage();
@@ -117,6 +219,7 @@ namespace Day012_영상처리_Beta4
         //공통 함수부
         void openImage()
         {
+            openValue = 1;
             OpenFileDialog ofd = new OpenFileDialog(); //객체 생성
             ofd.ShowDialog();
             fileName = ofd.FileName;
@@ -682,7 +785,6 @@ namespace Day012_영상처리_Beta4
                 }
             }
         }
-
         void dilationImage()
         {
             if (inImage == null)
